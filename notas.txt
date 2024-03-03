@@ -1,0 +1,9 @@
+18/02/2024
+
+Practica 1:
+No se bien cual era, pero es muy facil, solo falta verificar
+
+Practica 2:
+Esta bien lo que pidio, pero utilizo lo del libro que es ponerle valores maximos y minimos cuando los valores llegan a
+0 o a 255, cuando realmente el inge en algunas formulas nos explica que hay absolutos y no se que mas. Checar las
+presentaciones
