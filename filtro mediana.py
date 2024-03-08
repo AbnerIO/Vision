@@ -1,34 +1,27 @@
 import cv2
 import numpy as np
 
-def obtener_submatriz(img, x, y):
-    # Definir los límites para la submatriz
+def obtener_submatriz(img, x, y, xF, yF):
+    # Límites para la submatriz
     fila_inicio = max(0, x)
-    fila_fin = min(len(img), x + 10)
+    fila_fin = min(len(img), xF)
     col_inicio = max(0, y)
-    col_fin = min(len(img[0]), y + 10)
+    col_fin = min(len(img[0]), yF)
     
     # Extraer la submatriz
     submatriz = img[fila_inicio:fila_fin, col_inicio:col_fin]
     
-    # Si la submatriz no tiene 10x10, ajustarla con ceros
-    if submatriz.shape != (10, 10):
-        submatriz_ajustada = np.zeros((10, 10))
-        submatriz_ajustada[0:submatriz.shape[0], 0:submatriz.shape[1]] = submatriz
-        return submatriz_ajustada
-    else:
-        return submatriz
+    return submatriz
 
 def calcular_mediana(arreglo):
-    arreglo_ordenado = sorted(arreglo)
-    #print(arreglo_ordenado)
-    n = len(arreglo_ordenado)
+    arregloOrdenado = sorted(arreglo)
+    n = len(arregloOrdenado)
     
     if n % 2 == 0:
-        indice_medio_1 = n // 2 - 1
-        indice_medio_2 = n // 2
-        n1 = arreglo_ordenado[indice_medio_1]
-        n2 = arreglo_ordenado[indice_medio_2]
+        indiceMedio1 = n // 2 - 1
+        indiceMedio2 = n // 2
+        n1 = arregloOrdenado[indiceMedio1]
+        n2 = arregloOrdenado[indiceMedio2]
         nuevo = int(n1)
         nuevo2 = int(n2)
         rs = nuevo + nuevo2
@@ -36,50 +29,65 @@ def calcular_mediana(arreglo):
         mediana = (rs) // 2
     else:
         # Si hay un número impar de elementos, la mediana es el número en el medio
-        indice_medio = n // 2
-        mediana = arreglo_ordenado[indice_medio]
+        indiceMedio = n // 2
+        mediana = arregloOrdenado[indiceMedio]
     
     return mediana
 
 def dispersion_valores(arreglo, promedio):
-    arreglo_nuevo = arreglo.copy()  # Para evitar modificar el arreglo original
-    #print(arreglo_nuevo)
+    arregloNuevo = arreglo.copy()
     
-    for i in range(len(arreglo_nuevo)):  # Iteramos sobre los índices del arreglo
-        valorA = int(arreglo_nuevo[i])
-        #print(valorA)
-        arreglo_nuevo[i] = abs(((valorA - promedio) * 100) / promedio)
-        #print(arreglo_nuevo[i])
+    for i in range(len(arregloNuevo)): 
+        valorA = int(arregloNuevo[i])
+        arregloNuevo[i] = abs(((valorA - promedio) * 100) / promedio)
     
-    arreglo_dispersiones = arreglo_nuevo
+    arregloDisp = arregloNuevo
     
-    return arreglo_dispersiones
+    return arregloDisp
 
-def cambiar_valores(arreglo_dispersiones, arreglo, mediana):
-    for i in range(len(arreglo_dispersiones)):
-        if arreglo_dispersiones[i] > 10:
+def cambiar_valores(arregloDisp, arreglo, mediana):
+    for i in range(len(arregloDisp)):
+        if arregloDisp[i] > 10:
             arreglo[i] = mediana
-            print("se cambioooooooooo")
+            print("se cambio")
     
-    arreglo_final = arreglo
+    arregloF = arreglo
     
-    return arreglo_final
+    return arregloF
 
-img = cv2.imread(r"C:\Users\dell\Desktop\OpenCv\Photos\pruebavc.jpeg", 0)
+def convertir_arreglo_a_matriz(arreglo, forma_original):
+    matriz = np.reshape(arreglo, forma_original)
+    return matriz
 
+def integrar_matriz_original(matriz_final, matriz_original, x, y):
+    xF, yF = x + matriz_final.shape[0], y + matriz_final.shape[1]
+    matriz_original[x:xF, y:yF] = matriz_final
+    return matriz_original
+
+def matriz_inicial(img):
+    max_x, max_y = img.shape
+    
+    while True:
+        x = int(input("Ingrese la coordenada de inicio x: "))
+        y = int(input("Ingrese la coordenada de inicio y: "))
+        xF = int(input("Ingrese la coordenada del final x: "))
+        yF = int(input("Ingrese la coordenada del final y: "))
+        
+        if x >= 0 and x < max_x and x<xF and y >= 0 and y < max_y and y<yF and xF > x and xF <= max_x and yF > y and yF <= max_y:
+            break  # Si todo esta bien, sale del while
+        else:
+            print("Las coordenadas están fuera de los límites de la imagen o las iniciales son mayores que las finales. Inténtelo de nuevo.")
+    
+    return x, y, xF, yF
+
+
+img = cv2.imread(r"C:\Users\dell\Desktop\OpenCv\Photos\dogs.jpeg", 0)
 np.set_printoptions(threshold=np.inf)
-
-# Pedir al usuario las coordenadas
-x = int(input("Ingrese la coordenada x: "))
-y = int(input("Ingrese la coordenada y: "))
+cv2.imshow("Imagen original", img)
+x, y, xF, yF = matriz_inicial(img)
 
 # Se obtiene el pedazo de la matriz
-submatriz = obtener_submatriz(img, x, y)
-
-#print("Submatriz iniciando en las coordenadas ({},{}):".format(x, y))
-#print(submatriz)
-
-#submatriz = [[209, 224, 210, 204],[219, 211, 223, 232], [228, 207, 140, 233], [215, 223, 219, 225]]
+submatriz = obtener_submatriz(img, x, y, xF, yF)
 
 #Se convierte a arreglo
 arreglo = np.ravel(submatriz)
@@ -94,11 +102,18 @@ print("El promedio es", promedio)
 mediana = calcular_mediana(arreglo)
 print("La mediana del arreglo es:", mediana)
 
-
 # Sacar la dispersion de cada valor
-arreglo_dispersiones = dispersion_valores(arreglo, promedio)
-print("El arreglo de dispersiones es:", arreglo_dispersiones)
-
+arregloDisp = dispersion_valores(arreglo, promedio)
 # Arreglo ya corregido
-arreglo_final = cambiar_valores(arreglo_dispersiones, arreglo, mediana)
-print(arreglo_final)
+arregloF = cambiar_valores(arregloDisp, arreglo, mediana)
+
+# Aqui se convierte el arreglo final de nuevo a una matriz
+matriz_final = convertir_arreglo_a_matriz(arregloF, submatriz.shape)
+
+imagenModificada = integrar_matriz_original(matriz_final, img, x, y)
+
+
+cv2.imshow("Imagen modificada", imagenModificada)
+
+cv2.waitKey(0)
+cv2.destroyAllWindows()
