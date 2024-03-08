@@ -1,23 +1,17 @@
 import cv2
 import numpy as np
 
-def obtener_submatriz(img, x, y):
+def obtener_submatriz(img, x, y, xF, yF):
     # Límites para la submatriz
     fila_inicio = max(0, x)
-    fila_fin = min(len(img), x + 10)
+    fila_fin = min(len(img), xF)
     col_inicio = max(0, y)
-    col_fin = min(len(img[0]), y + 10)
+    col_fin = min(len(img[0]), yF)
     
     # Extraer la submatriz
     submatriz = img[fila_inicio:fila_fin, col_inicio:col_fin]
     
-    # Si la submatriz no tiene 10x10, ajustarla con ceros
-    if submatriz.shape != (10, 10):
-        submatriz_ajustada = np.zeros((10, 10))
-        submatriz_ajustada[0:submatriz.shape[0], 0:submatriz.shape[1]] = submatriz
-        return submatriz_ajustada
-    else:
-        return submatriz
+    return submatriz
 
 def calcular_moda(arreglo):
     # Diccionario para contar la frecuencia de cada elemento en el arreglo
@@ -42,13 +36,10 @@ def calcular_moda(arreglo):
 
 def dispersion_valores(arreglo, promedio):
     arreglo_nuevo = arreglo.copy() 
-    #print(arreglo_nuevo)
     
     for i in range(len(arreglo_nuevo)): 
         valorA = int(arreglo_nuevo[i])
-        #print(valorA)
         arreglo_nuevo[i] = abs(((valorA - promedio) * 100) / promedio)
-        #print(arreglo_nuevo[i])
     
     arreglo_dispersiones = arreglo_nuevo
     
@@ -58,27 +49,46 @@ def cambiar_valores(arreglo_dispersiones, arreglo, moda):
     for i in range(len(arreglo_dispersiones)):
         if arreglo_dispersiones[i] > 10:
             arreglo[i] = moda
-            print("se cambioooooooooo")
+            print("se cambio")
     
-    arreglo_final = arreglo
+    arregloF = arreglo
     
-    return arreglo_final
+    return arregloF
 
-img = cv2.imread(r"C:\Users\dell\Desktop\OpenCv\Photos\pruebavc.jpeg", 0)
+def convertir_arreglo_a_matriz(arreglo, forma_original):
+    matriz = np.reshape(arreglo, forma_original)
+    return matriz
+
+def integrar_matriz_original(matriz_final, matriz_original, x, y):
+    xF, yF = x + matriz_final.shape[0], y + matriz_final.shape[1]
+    matriz_original[x:xF, y:yF] = matriz_final
+    return matriz_original
+
+def matriz_inicial(img):
+    max_x, max_y = img.shape
+    
+    while True:
+        x = int(input("Ingrese la coordenada de inicio x: "))
+        y = int(input("Ingrese la coordenada de inicio y: "))
+        xF = int(input("Ingrese la coordenada del final x: "))
+        yF = int(input("Ingrese la coordenada del final y: "))
+        
+        if x >= 0 and x < max_x and x<xF and y >= 0 and y < max_y and y<yF and xF > x and xF <= max_x and yF > y and yF <= max_y:
+            break  # Si todo esta bien, sale del while
+        else:
+            print("Las coordenadas están fuera de los límites de la imagen o las iniciales son mayores que las finales. Inténtelo de nuevo.")
+    
+    return x, y, xF, yF
+
+
+img = cv2.imread(r"C:\Users\dell\Desktop\OpenCv\Photos\ajedrez.jpg", 0)
 
 np.set_printoptions(threshold=np.inf)
 
-# Pedir las coordenadas
-x = int(input("Ingrese la coordenada x: "))
-y = int(input("Ingrese la coordenada y: "))
+x, y, xF, yF = matriz_inicial(img)
 
 # Se obtiene el pedazo de la matriz
-submatriz = obtener_submatriz(img, x, y)
-
-#print("Submatriz iniciando en las coordenadas ({},{}):".format(x, y))
-#print(submatriz)
-
-#submatriz = [[209, 224, 210, 204],[219, 211, 223, 232], [228, 207, 140, 233], [215, 223, 219, 225]]
+submatriz = obtener_submatriz(img, x, y, xF, yF)
 
 #Se convierte a arreglo
 arreglo = np.ravel(submatriz)
@@ -89,7 +99,7 @@ cantidad_elementos = len(arreglo)
 promedio = suma_valores / cantidad_elementos
 print("El promedio es", promedio)
 
-# Sacar la mediana
+# Sacar la moda
 moda = calcular_moda(arreglo)
 print("La moda del arreglo es:", moda)
 
@@ -99,5 +109,17 @@ arreglo_dispersiones = dispersion_valores(arreglo, promedio)
 print("El arreglo de dispersiones es:", arreglo_dispersiones)
 
 # Arreglo ya corregido
-arreglo_final = cambiar_valores(arreglo_dispersiones, arreglo, moda)
-print(arreglo_final)
+arregloF = cambiar_valores(arreglo_dispersiones, arreglo, moda)
+print(arregloF)
+
+
+# Aqui se convierte el arreglo final de nuevo a una matriz
+matriz_final = convertir_arreglo_a_matriz(arregloF, submatriz.shape)
+
+imagenModificada = integrar_matriz_original(matriz_final, img, x, y)
+
+cv2.imshow("Imagen original", img)
+cv2.imshow("Imagen modificada", imagenModificada)
+
+cv2.waitKey(0)
+cv2.destroyAllWindows()
